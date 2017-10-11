@@ -11,7 +11,7 @@ server::server(unsigned int port_num)
 	IO_handler = new boost::asio::io_service();
 	socket_forServer = new boost::asio::ip::tcp::socket(*IO_handler);
 	server_acceptor = new boost::asio::ip::tcp::acceptor(*IO_handler,
-	boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port_num));
+	boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port_num)); 
 	std::cout << std::endl << "Ready. Port " << port_num << " created" << std::endl;
 	error_flag = false;
 	i_start = false;
@@ -41,7 +41,7 @@ void server::read_from_port()
 	cout << "Waiting message from client" << endl;
 	do
 	{
-		len = socket_forServer->read_some(boost::asio::buffer(buf), error);
+		len = (int) socket_forServer->read_some(boost::asio::buffer(buf), error);
 
 		if (!error)
 			buf[len] = '\0';
