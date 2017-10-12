@@ -13,6 +13,7 @@ server::server(unsigned int port_num)
 	server_acceptor = new boost::asio::ip::tcp::acceptor(*IO_handler,
 	boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port_num)); 
 	std::cout << std::endl << "Ready. Port " << port_num << " created" << std::endl;
+
 	error_flag = false;
 	i_start = false;
 	animation_seted = 0;
@@ -37,22 +38,21 @@ void server::conect_to_port()
 void server::read_from_port()
 {
 	boost::system::error_code error;
-	unsigned int len;
+	size_t len;
 	cout << "Waiting message from client" << endl;
 	do
 	{
-		len = (int) socket_forServer->read_some(boost::asio::buffer(buf), error);
+		len = socket_forServer->read_some(boost::asio::buffer(buf), error);
 
-		if (!error)
+		if (!error) {
 			buf[len] = '\0';
-		bufS_len = len;
+		}
 
 	} while (error.value() == WSAEWOULDBLOCK);
-
+	bufS_len = len;
 	if (!error) 
 	{
 		animation_seted = buf[ANIM];
-		// hay que poner aca para que se fije si coincide la ip con la mia
 		cout << "Client sais: " << buf << endl;
 	}
 	else 
@@ -65,20 +65,20 @@ void server::read_from_port()
 void server::send_msg(char * bufS)
 {
 	char buf_aux[MSG_BUF];
-	int i = 0;
-	while (bufS[i] != '\0')
+	unsigned int i = 0;
+	while (i < bufS_len)
 	{
 		buf_aux[i] = bufS[i];
 		i++;
 	}
 	buf_aux[i] = '\0';
-
+	cout << "Copiado OK: " << i << " Tamano buffer: " << strlen(buf_aux) << endl;
 	size_t len;
 	boost::system::error_code error;
 
 	do
 	{
-		len = socket_forServer->write_some(boost::asio::buffer(buf_aux, strlen(buf_aux)), error);
+		len = socket_forServer->write_some(boost::asio::buffer(buf_aux, i), error);
 	} while ((error.value() == WSAEWOULDBLOCK));
 	if (error)
 		cout << "Error while trying to connect to client " << error.message() << endl;
@@ -102,6 +102,17 @@ bool server::check_if_last()
 char server::get_animation()
 {
 	return animation_seted;
+}
+
+void server::set_bufSlen(unsigned int d)
+{
+	bufS_len = d;
+}
+
+void server::close_serverAcceptor()
+{
+	server_acceptor->close();
+	socket_forServer->close();
 }
 
 void server::inc_counter()

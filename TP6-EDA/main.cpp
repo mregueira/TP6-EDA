@@ -58,40 +58,44 @@ int main(int argc, char *argv[])
 			client c;
 			cout << "ingrese una secuencia, comenzando por un caracter válido y seguido por " << cantMaquinas;
 			cout << " números de maquinas válidos (entre 1 y " << cantMaquinas << "), sin repetirse" << endl;
-			cout << "caracteres válidos:" << endl;
+			cout << "caracteres válidos: A - B - C - D - E - F" << endl;
 			cout << "ips válidas:" << endl;
 
 			YOU_GO_generatorFromInput(c.get_buf(), (cantMaquinas + 2));  //se genera un paquete YOU_GO a partir del input del usuario.
 																		//el programa se bloquea aquí hasta que el usuario
 									    								//ingrese correctamente los parámetros.
-			
+			c.set_bufClen(cantMaquinas + 2);
+
 			if (maquinaPropia == (c.get_buf())[FIRST_MACHINE])
 			{
 				// lo que haya hecho fede
 				cout << "ANIMATION DE FEDE" << endl;/////
 				c.inc_counter();
+				Sleep(500);
 			}
 
 			int nextIp = getNextIpFromBuf(c.get_buf(), cantMaquinas + 2);
-			cout << nextIp << endl;
-			getchar();
+			cout << "Siguiente ip: " << nextIp << " Mensaje: " << c.get_buf() << endl;
 			c.conect_to_host((ipsVector[nextIp-1]).c_str(), DEF_PORT_STR); //////
 			c.send_msg(c.get_buf());
 
 			cout << "Message sended to server" << endl;
 		}
-
-		server s(DEF_PORT);
-
-		s.conect_to_port();
-		cout << "Conected Succesful" << endl;
+		
 		do
 		{
+			server s(DEF_PORT);
+			s.set_bufSlen(cantMaquinas + 2);
+			s.conect_to_port();
+			cout << "Conected Succesful" << endl;
 			s.read_from_port();
 			if (!s.read_error())
 			{
-				// pasar animacion
+				
+				cout << "ANIMACION DE FEDE" << endl;
 				s.inc_counter();
+				Sleep(500);
+
 				if (s.check_if_last())
 				{
 					cout << "ingrese una secuencia, comenzando por un caracter válido y seguido por " << cantMaquinas;
@@ -99,15 +103,23 @@ int main(int argc, char *argv[])
 					cout << "caracteres válidos:" << endl;
 					cout << "ips válidas:" << endl;
 					YOU_GO_generatorFromInput(s.get_buf(), (cantMaquinas + 2)); //aquí se bloquea el programa, hasta que el usuario
-																			   //ingrese correctamente el input.
+					if (maquinaPropia == (s.get_buf())[FIRST_MACHINE])          //ingrese correctamente el input.
+					{
+						// lo que haya hecho fede
+						cout << "ANIMATION DE FEDE" << endl;/////
+						s.inc_counter();
+						Sleep(500);
+					}														   
 				}
 
-				client c;
 				int nextIp = getNextIpFromBuf(s.get_buf(), cantMaquinas + 2);
+				cout << "Siguiente ip: " << nextIp << " Mensaje: " << s.get_buf() << endl;
+				client c;
+				c.set_bufClen(cantMaquinas + 2);
 				c.conect_to_host(ipsVector[nextIp-1].c_str(), DEF_PORT_STR);
 				c.send_msg(s.get_buf());
+				cout << "Message sended to server" << endl;	
 			}
-
 		} while (true);
 	}
 	else
@@ -169,7 +181,7 @@ int parserCmd(vector <string> & ipsVector, int cantMaquinas, int & maquinaPropia
 void YOU_GO_generatorFromInput(char * buf_YOU_GO, int bufSize)
 {
 	
-	buf_YOU_GO[POS_CONT] = 1; // ya se sabe que bufSize es mayor a POS_CONT, y que el contador debe arrancar en cero.
+	buf_YOU_GO[POS_CONT] = 0; // ya se sabe que bufSize es mayor a POS_CONT, y que el contador debe arrancar en cero.
 	char c = '\0';
 	bool validCharFounded = false;
 	
@@ -216,14 +228,14 @@ void YOU_GO_generatorFromInput(char * buf_YOU_GO, int bufSize)
 			{
 				cout << "me acuerdo de la maquina " << maquinaInput << "es la maquina numero " << machinesReceivedCounter + 1 << " ingresada" << endl;
 				maquinasArray[machinesReceivedCounter] = maquinaInput; //recuerdo la maquina que se ingresó.
-				buf_YOU_GO[machinesReceivedCounter + 2] = maquinaInput;
+				buf_YOU_GO[machinesReceivedCounter + FIRST_MACHINE] = maquinaInput;
 				machinesReceivedCounter++; //incremento la maquina recibida, ya que en este punto estoy seguro de que lo que se recibió es válido.
 			}
 		}
 
 	} while (machinesReceivedCounter < cantIps);
-	
-	delete maquinasArray;
+	buf_YOU_GO[machinesReceivedCounter + FIRST_MACHINE] = '\0';
+	delete[] maquinasArray;
 }
 
 int getNextIpFromBuf(char * buf, int bufSize)

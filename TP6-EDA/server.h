@@ -1,7 +1,7 @@
 #include <boost/asio.hpp>
 
-#define MSG_BUF 255
-#define MY_IP 127.0.0.1
+#define MSG_BUF 258
+
 
 class server
 {
@@ -15,6 +15,8 @@ public:
 	bool check_if_i_start();
 	bool check_if_last();
 	char get_animation();
+	void set_bufSlen(unsigned int d);
+	void close_serverAcceptor();
 	void inc_counter();
 	char* get_buf();
 private:

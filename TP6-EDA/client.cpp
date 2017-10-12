@@ -2,8 +2,6 @@
 #include "client.h"
 #include <iostream>
 
-#define MSG_BUF 255
-
 enum { ANIM, COUNT };
 
 using namespace std;
@@ -36,19 +34,23 @@ void client::conect_to_host(const char * host, char* port_num)
 	cout << "Trying to connect to " << host << " on port " << port_num << std::endl;
 	boost::asio::connect(*socket_forClient, endpoint);
 	socket_forClient->non_blocking(true);
+	cout << "Conected OK to host." << endl;
 }
 
 void client::read_from_port()
 {
 	boost::system::error_code error;
-	unsigned int len;
+	size_t len;
 	cout << "Waiting message from server" << endl;
 	do
 	{
 		len = socket_forClient->read_some(boost::asio::buffer(buf), error);
 
-		if (!error)
+		if (!error) {
 			buf[len] = '\0';
+			bufC_len = len;
+		}
+			
 
 	} while (error.value() == WSAEWOULDBLOCK);
 
@@ -56,7 +58,7 @@ void client::read_from_port()
 	{
 		animation_seted = buf[ANIM];
 		// hay que poner aca para que se fije si coincide la ip con la mia
-		cout << "Server sais: " << buf << endl;
+		cout << "Client sais: " << buf << endl;
 	}
 	else
 	{
@@ -68,20 +70,20 @@ void client::read_from_port()
 void client::send_msg(char* bufC)
 {
 	char buf_aux[MSG_BUF];
-	int i = 0;
-	while (bufC[i] != '\0') 
+	unsigned int i = 0;
+	while (i < bufC_len) 
 	{
 		buf_aux[i] = bufC[i];
 		i++;
 	}
 	buf_aux[i] = '\0';
-
+	cout << "Copiado OK: " << i << " Tamano buffer: " << strlen(buf_aux) << endl;
 	size_t len;
 	boost::system::error_code error;
 
 	do
 	{
-		len = socket_forClient->write_some(boost::asio::buffer(buf_aux, strlen(buf_aux)), error);
+		len = socket_forClient->write_some(boost::asio::buffer(buf_aux, i), error);
 	} while ((error.value() == WSAEWOULDBLOCK));
 	if (error)
 		cout << "Error while trying to connect to server " << error.message() << endl;
@@ -105,6 +107,11 @@ bool client::check_if_last()
 char client::get_animation()
 {
 	return animation_seted;
+}
+
+void client::set_bufClen(unsigned int d)
+{
+	bufC_len = d;
 }
 
 void client::inc_counter()
