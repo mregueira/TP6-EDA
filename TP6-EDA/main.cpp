@@ -74,7 +74,6 @@ int main(int argc, char *argv[])
 
 			int nextIp = getNextIpFromBuf(c.get_buf(), cantMaquinas + 2);
 			cout << nextIp << endl;
-			getchar();
 			c.conect_to_host((ipsVector[nextIp-1]).c_str(), DEF_PORT_STR); //////
 			c.send_msg(c.get_buf());
 
@@ -169,7 +168,7 @@ int parserCmd(vector <string> & ipsVector, int cantMaquinas, int & maquinaPropia
 void YOU_GO_generatorFromInput(char * buf_YOU_GO, int bufSize)
 {
 	
-	buf_YOU_GO[POS_CONT] = 1; // ya se sabe que bufSize es mayor a POS_CONT, y que el contador debe arrancar en cero.
+	buf_YOU_GO[POS_CONT] = 0; // ya se sabe que bufSize es mayor a POS_CONT, y que el contador debe arrancar en cero.
 	char c = '\0';
 	bool validCharFounded = false;
 	
