@@ -11,7 +11,7 @@ client::client()
 	IO_handler = new boost::asio::io_service();
 	socket_forClient = new boost::asio::ip::tcp::socket(*IO_handler);
 	client_resolver = new boost::asio::ip::tcp::resolver(*IO_handler);
-	cout << "Client created succesfully" << endl;
+	cout << "--> Cliente creado exitosamente" << endl;
 	error_flag = false;
 	i_start = false;
 	animation_seted = 0;
@@ -31,17 +31,17 @@ void client::conect_to_host(const char * host, char* port_num)
 {
 	endpoint = client_resolver->resolve(
 		boost::asio::ip::tcp::resolver::query(host, port_num));
-	cout << "Trying to connect to " << host << " on port " << port_num << std::endl;
+	cout << "--> Intentando conectarse a " << host << " en el puerto " << port_num << std::endl;
 	boost::asio::connect(*socket_forClient, endpoint);
 	socket_forClient->non_blocking(true);
-	cout << "Conected OK to host." << endl;
+	cout << "--> Conexion a host exitosa" << endl;
 }
 
 void client::read_from_port()
 {
 	boost::system::error_code error;
 	size_t len;
-	cout << "Waiting message from server" << endl;
+	cout << "--> Esperando mensaje de servidor..." << endl;
 	do
 	{
 		len = socket_forClient->read_some(boost::asio::buffer(buf), error);
@@ -58,12 +58,11 @@ void client::read_from_port()
 	{
 		animation_seted = buf[ANIM];
 		// hay que poner aca para que se fije si coincide la ip con la mia
-		cout << "Client sais: " << buf << endl;
 	}
 	else
 	{
 		
-		cout << "Error while trying to connect to server " << error.message() << endl;
+		cout << "--> Error al intentar conectarse a servidor " << error.message() << endl;
 	}
 }
 
@@ -77,7 +76,6 @@ void client::send_msg(char* bufC)
 		i++;
 	}
 	buf_aux[i] = '\0';
-	cout << "Copiado OK: " << i << " Tamano buffer: " << strlen(buf_aux) << endl;
 	size_t len;
 	boost::system::error_code error;
 
@@ -86,7 +84,7 @@ void client::send_msg(char* bufC)
 		len = socket_forClient->write_some(boost::asio::buffer(buf_aux, i), error);
 	} while ((error.value() == WSAEWOULDBLOCK));
 	if (error)
-		cout << "Error while trying to connect to server " << error.message() << endl;
+		cout << "--> Error al intentar conectarse a servidor " << error.message() << endl;
 }
 
 bool client::read_error()

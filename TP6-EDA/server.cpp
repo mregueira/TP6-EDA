@@ -12,7 +12,7 @@ server::server(unsigned int port_num)
 	socket_forServer = new boost::asio::ip::tcp::socket(*IO_handler);
 	server_acceptor = new boost::asio::ip::tcp::acceptor(*IO_handler,
 	boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port_num)); 
-	std::cout << std::endl << "Ready. Port " << port_num << " created" << std::endl;
+	std::cout << std::endl << "--> Ok. Puerto " << port_num << " creado. Esperando conexion..." << std::endl;
 
 	error_flag = false;
 	i_start = false;
@@ -39,7 +39,7 @@ void server::read_from_port()
 {
 	boost::system::error_code error;
 	size_t len;
-	cout << "Waiting message from client" << endl;
+	cout << "--> Esperando mensaje de cliente..." << endl;
 	do
 	{
 		len = socket_forServer->read_some(boost::asio::buffer(buf), error);
@@ -53,12 +53,12 @@ void server::read_from_port()
 	if (!error) 
 	{
 		animation_seted = buf[ANIM];
-		cout << "Client sais: " << buf << endl;
+		
 	}
 	else 
 	{
 		error_flag = true;
-		cout << "Error while trying to connect to client " << error.message() << endl;
+		cout << "--> Error al intentar conectarse a cliente " << error.message() << endl;
 	}
 }
 
@@ -72,7 +72,6 @@ void server::send_msg(char * bufS)
 		i++;
 	}
 	buf_aux[i] = '\0';
-	cout << "Copiado OK: " << i << " Tamano buffer: " << strlen(buf_aux) << endl;
 	size_t len;
 	boost::system::error_code error;
 
@@ -81,7 +80,7 @@ void server::send_msg(char * bufS)
 		len = socket_forServer->write_some(boost::asio::buffer(buf_aux, i), error);
 	} while ((error.value() == WSAEWOULDBLOCK));
 	if (error)
-		cout << "Error while trying to connect to client " << error.message() << endl;
+		cout << "--> Error al intentar conectarse a cliente " << error.message() << endl;
 }
 
 bool server::read_error()
