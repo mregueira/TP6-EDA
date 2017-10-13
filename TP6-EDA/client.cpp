@@ -57,7 +57,6 @@ void client::read_from_port()
 	if (!error)
 	{
 		animation_seted = buf[ANIM];
-		// hay que poner aca para que se fije si coincide la ip con la mia
 	}
 	else
 	{

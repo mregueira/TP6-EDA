@@ -1,8 +1,11 @@
 #include "stdafx.h"
 #include "client.h"
 #include "server.h"
-#include <iostream>
+#include <allegro5\allegro5.h>
+#include <allegro5\allegro_image.h>
 #include "fileHandler.h"
+#include <iostream>
+#include "graphic_movement.h"
 
 #define DEF_PORT 12345
 #define DEF_PORT_STR "12345"
@@ -16,20 +19,52 @@
 #define NUMBER_OF_VALID_CHARS 6
 char validCharsTable[6] = { 'A', 'B', 'C', 'D', 'E', 'F' };
 
-enum {FAIL, BEGGINER, NO_BEGGINER} returnsParser;
+enum { FAIL, BEGGINER, NO_BEGGINER } returnsParser;
 
 int parserCmd(vector <string> & ipsVector, int cantMaquinas, int & maquinaPropia, int argc, char ** argv);
 void YOU_GO_generatorFromInput(char * buf_YOU_GO, int bufSize);
 int getNextIpFromBuf(char * buf, int bufSize);
 
+
+
+
 using namespace std;
 
 int main(int argc, char *argv[])
 {
+	//ALLEGRO INIT
+	ALLEGRO_DISPLAY * display = nullptr;
+
+
+	if (!al_init()) {
+		return ERROR;
+	}
+
+	display = al_create_display(800, 600);
+
+	if (display == nullptr) {
+		return ERROR;
+	}
+
+	if (!al_init_image_addon()) { // ADDON necesario para manejo(no olvidar el freno de mano) de imagenes
+		return ERROR;
+	}
+
+
+	graphic_movement graphic_handler;
+
+
+	//graphic_handler.init();
+	graphic_handler.load_imgs();
+	graphic_handler.load_background();
+	graphic_handler.flip_background();
+	//graphic_handler.load_backgroundwoalpha();
+
+
 	fileHandler ipsHandler("ips.txt", 'r'); // Abro el archivo de las ips en modo escritura
 	vector <string> ipsVector;
 	ipsHandler.extractLines(ipsVector);
-	int maquinaPropia = 0, cantMaquinas = (int) ipsVector.size();
+	int maquinaPropia = 0, cantMaquinas = (int)ipsVector.size();
 	bool maquinaFounded = false, master = false, inputOk = false;
 
 	//char * buf_YOU_GO = new char[cantMaquinas + 2]; //creo el buffer para el paquete YOU_GO (sumo '2' para el contador y el caracter de animación).
@@ -56,11 +91,12 @@ int main(int argc, char *argv[])
 		if (master)
 		{
 			client c;
-			cout << ">> Ingrese una secuencia, comenzando por un caracter valido," << endl;
-			cout << "   seguido de numeros de maquinas validos (entre 1 y " << cantMaquinas << "), SIN repetirse" << endl;
+			cout << ">> Ingrese una secuencia, comenzando por un caracter valido (luuego enter)," << endl;
+			cout << "   seguido de numeros de maquinas validos (entre 1 y " << cantMaquinas << "), SIN repetirse";
+			cout << "  (presione enter luego de CADA numero...)" << endl;
 			cout << "   Caracteres validos: A - B - C - D - E - F" << endl;
 
-			YOU_GO_generatorFromInput(c.get_buf(), (cantMaquinas + 2));  
+			YOU_GO_generatorFromInput(c.get_buf(), (cantMaquinas + 2));
 			// Se genera un paquete YOU_GO a partir del input del usuario.
 			// el programa se bloquea aquí hasta que el usuario
 			// ingrese correctamente los parámetros.
@@ -69,18 +105,18 @@ int main(int argc, char *argv[])
 
 			if (maquinaPropia == (c.get_buf())[FIRST_MACHINE])
 			{
-				cout << "ANIMATION DE FEDE" << endl;
+				graphic_handler.start_gif(c.get_buf()[POS_CHAR] - 'A');
 				c.inc_counter();
-				Sleep(500);
+				
 			}
 
-			int nextIp = getNextIpFromBuf(c.get_buf(), cantMaquinas + 2);
-			c.conect_to_host((ipsVector[nextIp-1]).c_str(), DEF_PORT_STR); //////
+			int nextIp = getNextIpFromBuf(c.get_buf(), cantMaquinas + 2); //nextIP siempre es mayor a cero.
+			c.conect_to_host((ipsVector[nextIp - 1]).c_str(), DEF_PORT_STR); 
 			c.send_msg(c.get_buf());
 
 			cout << "--> Mensaje enviado correctamente al servidor" << endl;
 		}
-		
+
 		do
 		{
 			server s(DEF_PORT);
@@ -90,10 +126,10 @@ int main(int argc, char *argv[])
 			s.read_from_port();
 			if (!s.read_error())
 			{
-				
-				cout << "ANIMACION DE FEDE" << endl;
+
+				graphic_handler.start_gif(s.get_animation() - 'A');
 				s.inc_counter();
-				Sleep(500);
+				
 
 				if (s.check_if_last())
 				{
@@ -101,19 +137,20 @@ int main(int argc, char *argv[])
 					cout << "   seguido de numeros de maquinas validos (entre 1 y " << cantMaquinas << "), SIN repetirse." << endl;
 					cout << "   Caracteres validos: A - B - C - D - E - F" << endl;
 					YOU_GO_generatorFromInput(s.get_buf(), (cantMaquinas + 2)); //aquí se bloquea el programa, hasta que el usuario
-					if (maquinaPropia == (s.get_buf())[FIRST_MACHINE])          //ingrese correctamente el input.
+																				//ingrese correctamente el input
+
+					if (maquinaPropia == (s.get_buf())[FIRST_MACHINE])        
 					{
-						// lo que haya hecho fede
-						cout << "ANIMATION DE FEDE" << endl;/////
+						graphic_handler.start_gif(s.get_buf()[POS_CHAR] - 'A'); 
 						s.inc_counter();
-						Sleep(500);
-					}														   
+						
+					}
 				}
 
 				int nextIp = getNextIpFromBuf(s.get_buf(), cantMaquinas + 2);
 				client c;
 				c.set_bufClen(cantMaquinas + 2);
-				c.conect_to_host(ipsVector[nextIp-1].c_str(), DEF_PORT_STR);
+				c.conect_to_host(ipsVector[nextIp - 1].c_str(), DEF_PORT_STR);
 				c.send_msg(s.get_buf());
 				cout << "--> Mensaje enviado correctamente al servidor" << endl;
 			}
@@ -123,8 +160,8 @@ int main(int argc, char *argv[])
 	{
 		cout << "--> Input error - Abortando programa" << endl;
 	}
-
-    return 0;
+	al_destroy_display(display);
+	return 0;
 }
 
 int parserCmd(vector <string> & ipsVector, int cantMaquinas, int & maquinaPropia, int argc, char ** argv)
@@ -177,11 +214,11 @@ int parserCmd(vector <string> & ipsVector, int cantMaquinas, int & maquinaPropia
 
 void YOU_GO_generatorFromInput(char * buf_YOU_GO, int bufSize)
 {
-	
+
 	buf_YOU_GO[POS_CONT] = 0; // Ya se sabe que bufSize es mayor a POS_CONT, y que el contador debe arrancar en cero.
 	char c = '\0';
 	bool validCharFounded = false;
-	
+
 	do
 	{
 		cout << ">> Ingrese un caracter valido: ";
@@ -240,3 +277,5 @@ int getNextIpFromBuf(char * buf, int bufSize)
 	int nextIpNumber = buf[2 + counter]; // Sumo dos para tener en cuenta el contador y el caracter de animación.
 	return nextIpNumber;
 }
+
+
